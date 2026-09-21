@@ -22,11 +22,7 @@ jobs:
         with:
           distribution: 'temurin'
           java-version: '17'
-
-      - name: Set up Android SDK
-        uses: android-actions/setup-android@v3
-
-      - name: Install project dependencies
+            - name: Install project dependencies
         run: npm install
 
       - name: Add the Android platform
