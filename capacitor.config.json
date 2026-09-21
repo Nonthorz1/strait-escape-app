@@ -1,0 +1,13 @@
+{
+  "appId": "com.nonthorz.straitescape",
+  "appName": "Strait Escape",
+  "webDir": "www",
+  "backgroundColor": "#0a2e3d",
+  "android": {
+    "backgroundColor": "#0a2e3d",
+    "allowMixedContent": false
+  },
+  "server": {
+    "androidScheme": "https"
+  }
+}

@@ -1,0 +1,20 @@
+{
+  "name": "strait-escape",
+  "version": "1.0.0",
+  "description": "Strait Escape: Cargo Run — a cartoon arcade game, wrapped for Android/iOS with Capacitor.",
+  "private": true,
+  "scripts": {
+    "sync": "cap sync",
+    "android:open": "cap open android",
+    "android:build-debug": "cd android && ./gradlew assembleDebug",
+    "android:build-release": "cd android && ./gradlew bundleRelease"
+  },
+  "dependencies": {
+    "@capacitor/core": "^6.1.2",
+    "@capacitor/android": "^6.1.2"
+  },
+  "devDependencies": {
+    "@capacitor/cli": "^6.1.2",
+    "@capacitor/assets": "^3.0.5"
+  }
+}
