@@ -39,9 +39,16 @@ jobs:
         run: ./gradlew bundleRelease
         working-directory: android
 
-      # FIXED: Changed path to a wildcard search so it finds the file wherever it drops
+      # SIGNING STEP: Generates a secure release key and signs the file
+      - name: Sign the AAB Bundle
+        run: |
+          keytool -genkey -v -keystore release.keystore -alias my-key-alias -keyalg RSA -keysize 2048 -validity 10000 -storepass testpassword -keypass testpassword -dname "CN=StraitEscape, OU=Gaming, O=Indie, L=City, S=State, C=US"
+          jarsigner -verbose -sigalg SHA256withRSA -digestalg SHA-256 -keystore release.keystore -storepass testpassword -keypass testpassword android/app/build/outputs/bundle/release/app-release-unsigned.aab my-key-alias
+          mv android/app/build/outputs/bundle/release/app-release-unsigned.aab android/app/build/outputs/bundle/release/strait-escape-signed.aab
+
+      # UPLOAD STEP: Uploads the freshly signed bundle file
       - name: Upload the AAB Bundle
         uses: actions/upload-artifact@v4
         with:
           name: strait-escape-release-aab
-          path: android/app/build/outputs/bundle/**/*.aab
+          path: android/app/build/outputs/bundle/release/strait-escape-signed.aab
