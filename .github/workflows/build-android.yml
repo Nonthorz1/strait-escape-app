@@ -1,4 +1,4 @@
-name: Build Android APK
+name: Build Android AAB for Play Store
 
 on:
   push:
@@ -11,23 +11,36 @@ jobs:
     steps:
       - name: Check out the code
         uses: actions/checkout@v4
+
       - name: Set up Node.js
         uses: actions/setup-node@v4
-        with: { node-version: '20' }
+        with:
+          node-version: '20'
+
       - name: Set up Java
         uses: actions/setup-java@v4
-        with: { distribution: 'temurin', java-version: '17' }
+        with:
+          distribution: 'temurin'
+          java-version: '17'
+
       - name: Install project dependencies
         run: npm install
+
       - name: Add the Android platform
         run: npx cap add android
+
       - name: Sync web content into the Android project
         run: npx cap sync android
+
       - name: Make gradlew executable
         run: chmod +x ./android/gradlew
-      - name: Build the debug APK
-        run: ./gradlew assembleDebug
+
+      - name: Build the Release AAB
+        run: ./gradlew bundleRelease
         working-directory: android
-      - name: Upload the APK
+
+      - name: Upload the AAB Bundle
         uses: actions/upload-artifact@v4
-        with: { name: strait-escape-debug-apk, path: android/app/build/outputs/apk/debug/app-debug.apk }
+        with:
+          name: strait-escape-release-aab
+          path: android/app/build/outputs/bundle/release/app-release-unsigned.aab
