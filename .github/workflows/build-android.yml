@@ -26,9 +26,6 @@ jobs:
       - name: Install project dependencies
         run: npm install
 
-      - name: Build web assets
-        run: npm run build
-
       - name: Sync web content into the Android project
         run: npx cap sync android
 
