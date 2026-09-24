@@ -35,8 +35,8 @@ jobs:
       - name: Make gradlew executable
         run: chmod +x ./android/gradlew
 
-      - name: Build the Release AAB
-        run: ./gradlew bundleRelease
+      - name: Build and Sign the Release AAB
+        run: ./gradlew bundleRelease -Pandroid.injected.signing.store.file=$(pwd)/app/debug.keystore -Pandroid.injected.signing.store.password=android -Pandroid.injected.signing.key.alias=androiddebugkey -Pandroid.injected.signing.key.password=android
         working-directory: android
 
       - name: Upload the AAB Bundle
