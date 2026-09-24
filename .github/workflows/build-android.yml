@@ -35,19 +35,12 @@ jobs:
       - name: Make gradlew executable
         run: chmod +x ./android/gradlew
 
-      - name: Build the Release AAB
-        run: ./gradlew bundleRelease
-        working-directory: android
+      - name: Generate Custom Keystore
+        run: keytool -genkeypair -v -keystore android/app/release.keystore -alias strait-escape-key -keyalg RSA -keysize 2048 -validity 10000 -storepass straitpassword -keypass straitpassword -dname "CN=StraitEscape,O=Developer,C=US"
 
-      - name: Sign App Bundle for Play Store
-        uses: rindigo/sign-android-release@v1
-        id: sign_app
-        with:
-          releaseDirectory: android/app/build/outputs/bundle/release
-          signingKeyBase64: ${{ secrets.ANDROID_SIGNING_KEY }}
-          alias: android-upload-key
-          keyStorePassword: password123
-          keyPassword: password123
+      - name: Build and Sign the Release AAB
+        run: ./gradlew bundleRelease -Pandroid.injected.signing.store.file=$(pwd)/app/release.keystore -Pandroid.injected.signing.store.password=straitpassword -Pandroid.injected.signing.key.alias=strait-escape-key -Pandroid.injected.signing.key.password=straitpassword
+        working-directory: android
 
       - name: Upload the Signed AAB Bundle
         uses: actions/upload-artifact@v4
