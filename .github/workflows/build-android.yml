@@ -26,8 +26,8 @@ jobs:
       - name: Install project dependencies
         run: npm install
 
-      - name: Add the Android platform
-        run: npx cap add android
+      - name: Build web assets
+        run: npm run build
 
       - name: Sync web content into the Android project
         run: npx cap sync android
@@ -43,4 +43,4 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: strait-escape-release-aab
-          path: ./**/*.aab
+          path: android/app/build/outputs/bundle/release/app-release.aab
