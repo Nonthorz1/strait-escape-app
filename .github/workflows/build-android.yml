@@ -39,7 +39,17 @@ jobs:
         run: ./gradlew bundleRelease
         working-directory: android
 
-      - name: Upload the AAB Bundle
+      - name: Sign App Bundle for Play Store
+        uses: rindigo/sign-android-release@v1
+        id: sign_app
+        with:
+          releaseDirectory: android/app/build/outputs/bundle/release
+          signingKeyBase64: ${{ secrets.ANDROID_SIGNING_KEY }}
+          alias: android-upload-key
+          keyStorePassword: password123
+          keyPassword: password123
+
+      - name: Upload the Signed AAB Bundle
         uses: actions/upload-artifact@v4
         with:
           name: strait-escape-release-aab
