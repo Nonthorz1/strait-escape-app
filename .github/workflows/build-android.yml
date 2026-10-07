@@ -1,56 +1,12 @@
-name: Build Android AAB for Play Store
+name: Build Android AAB for Play Store (V2 Fresh Start)
 
 on:
   push:
     branches: [ main ]
   workflow_dispatch:
-    inputs:
-      generate_new_key:
-        description: 'Set to "true" to generate a brand new key and certificate'
-        required: false
-        default: 'false'
 
 jobs:
-  # JOB 1: Run this ONLY when you explicitly want to reset/generate a key
-  generate-key:
-    if: "${{ github.event.inputs.generate_new_key == 'true' }}"
-    runs-on: ubuntu-latest
-    steps:
-      - name: Generate the permanent keystore
-        env:
-          PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
-        run: |
-          keytool -genkeypair -v -keystore release.keystore -alias strait-escape-key \
-            -keyalg RSA -keysize 2048 -validity 10000 \
-            -storepass "$PASSWORD" -keypass "$PASSWORD" \
-            -dname "CN=StraitEscape,O=Developer,C=US"
-
-      - name: Export the public certificate for Google Play
-        env:
-          PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
-        run: |
-          keytool -exportcert -rfc -keystore release.keystore -alias strait-escape-key \
-            -storepass "$PASSWORD" -file upload_certificate.pem
-
-      - name: Upload the public certificate artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: upload-certificate
-          path: upload_certificate.pem
-
-      - name: Text File output of your Keystore Base64
-        run: |
-          base64 -w 0 release.keystore > keystore_base64_text.txt
-
-      - name: Upload Keystore Text File (Download this!)
-        uses: actions/upload-artifact@v4
-        with:
-          name: keystore-base64-text-file
-          path: keystore_base64_text.txt
-
-  # JOB 2: Standard build pipeline that uses the saved key
   build:
-    if: "${{ github.event.inputs.generate_new_key != 'true' }}"
     runs-on: ubuntu-latest
     steps:
       - name: Check out the code
@@ -79,29 +35,28 @@ jobs:
       - name: Make gradlew executable
         run: chmod +x ./android/gradlew
 
-      - name: Restore the permanent signing key from secrets
+      - name: Generate Fresh V2 Keystore
         env:
-          KEYSTORE_BASE64: ${{ secrets.KEYSTORE_BASE64 }}
+          PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
         run: |
-          if [ -z "$KEYSTORE_BASE64" ] || [ "$KEYSTORE_BASE64" = "1" ] || [ "$KEYSTORE_BASE64" = "temp" ]; then
-            echo "Error: KEYSTORE_BASE64 secret is missing or contains placeholder. Run this workflow with generate_new_key=true first."
-            exit 1
-          fi
-          echo "$KEYSTORE_BASE64" | base64 -d > android/app/release.keystore
+          keytool -genkeypair -v -keystore android/app/release.keystore \
+            -alias strait-escape-v2-key -keyalg RSA -keysize 2048 -validity 10000 \
+            -storepass "$PASSWORD" -keypass "$PASSWORD" \
+            -dname "CN=StraitEscapeV2,O=Developer,C=US"
 
-      - name: Build and Sign the Release AAB
+      - name: Build and Sign the V2 Release AAB
         env:
-          KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
+          PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
         run: |
           ./gradlew bundleRelease \
-            -Pandroid.injected.signing.store.file="$GITHUB_WORKSPACE/android/app/release.keystore" \
-            -Pandroid.injected.signing.store.password="$KEYSTORE_PASSWORD" \
-            -Pandroid.injected.signing.key.alias=strait-escape-key \
-            -Pandroid.injected.signing.key.password="$KEYSTORE_PASSWORD"
+            -Pandroid.injected.signing.store.file=$(pwd)/app/release.keystore \
+            -Pandroid.injected.signing.store.password="$PASSWORD" \
+            -Pandroid.injected.signing.key.alias=strait-escape-v2-key \
+            -Pandroid.injected.signing.key.password="$PASSWORD"
         working-directory: android
 
-      - name: Upload the Signed AAB Bundle
+      - name: Upload the V2 Signed AAB Bundle
         uses: actions/upload-artifact@v4
         with:
-          name: strait-escape-release-aab
+          name: strait-escape-v2-release-aab
           path: android/app/build/outputs/bundle/release/app-release.aab
