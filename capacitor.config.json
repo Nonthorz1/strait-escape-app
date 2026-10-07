@@ -1,6 +1,6 @@
 {
-  "appId": "com.nonthorz.straitescapev2",
-  "appName": "Strait Escape V2",
+  "appId": "com.nonthorz.straitescapecargorun",
+  "appName": "Strait Escape Cargo Run",
   "webDir": "www",
   "backgroundColor": "#0a2e3d",
   "android": {
