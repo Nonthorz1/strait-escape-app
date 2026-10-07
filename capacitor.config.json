@@ -1,6 +1,6 @@
 {
-  "appId": "com.nonthorz.straitescape",
-  "appName": "Strait Escape",
+  "appId": "com.nonthorz.straitescapev2",
+  "appName": "Strait Escape V2",
   "webDir": "www",
   "backgroundColor": "#0a2e3d",
   "android": {
@@ -8,7 +8,7 @@
     "allowMixedContent": false,
     "compileSdkVersion": 36,
     "targetSdkVersion": 36,
-    "versionCode": 3,
+    "versionCode": 1,
     "signingSHA256": "4D:FF:21:26:08:32:04:0A:79:36:5B:67:DC:12:C3:2C:A7:81:0B:19:C7:3E:56:42:42:37:2C:15:C8:E8:69:7A"
   },
   "server": {
