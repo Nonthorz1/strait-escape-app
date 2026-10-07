@@ -4,9 +4,50 @@ on:
   push:
     branches: [ main ]
   workflow_dispatch:
+    inputs:
+      generate_new_key:
+        description: 'Set to "true" to generate a brand new key and certificate'
+        required: false
+        default: 'false'
 
 jobs:
+  # JOB 1: Run this ONLY when you explicitly want to reset/generate a key
+  generate-key:
+    if: "${{ github.event.inputs.generate_new_key == 'true' }}"
+    runs-on: ubuntu-latest
+    steps:
+      - name: Generate the permanent keystore
+        env:
+          PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
+        run: |
+          keytool -genkeypair -v -keystore release.keystore -alias strait-escape-key \
+            -keyalg RSA -keysize 2048 -validity 10000 \
+            -storepass "$PASSWORD" -keypass "$PASSWORD" \
+            -dname "CN=StraitEscape,O=Developer,C=US"
+
+      - name: Export the public certificate for Google Play
+        env:
+          PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
+        run: |
+          keytool -exportcert -rfc -keystore release.keystore -alias strait-escape-key \
+            -storepass "$PASSWORD" -file upload_certificate.pem
+
+      - name: Save the keystore into GitHub Secrets
+        env:
+          GH_TOKEN: ${{ secrets.GH_PAT || secrets.GITHUB_TOKEN }}
+        run: |
+          base64 -w 0 release.keystore > keystore.b64
+          gh secret set KEYSTORE_BASE64 --repo "$GITHUB_REPOSITORY" < keystore.b64
+
+      - name: Upload the public certificate artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: upload-certificate
+          path: upload_certificate.pem
+
+  # JOB 2: Standard build pipeline that uses the saved key
   build:
+    if: "${{ github.event.inputs.generate_new_key != 'true' }}"
     runs-on: ubuntu-latest
     steps:
       - name: Check out the code
@@ -35,11 +76,25 @@ jobs:
       - name: Make gradlew executable
         run: chmod +x ./android/gradlew
 
-      - name: Generate Custom Keystore
-        run: keytool -genkeypair -v -keystore android/app/release.keystore -alias strait-escape-key -keyalg RSA -keysize 2048 -validity 10000 -storepass straitpassword -keypass straitpassword -dname "CN=StraitEscape,O=Developer,C=US"
+      - name: Restore the permanent signing key from secrets
+        env:
+          KEYSTORE_BASE64: ${{ secrets.KEYSTORE_BASE64 }}
+        run: |
+          if [ -z "$KEYSTORE_BASE64" ] || [ "$KEYSTORE_BASE64" = "1" ] || [ "$KEYSTORE_BASE64" = "temp" ]; then
+            echo "Error: KEYSTORE_BASE64 secret is missing or contains placeholder. Run this workflow with generate_new_key=true first."
+            exit 1
+          fi
+          echo "$KEYSTORE_BASE64" | base64 -d > android/app/release.keystore
 
       - name: Build and Sign the Release AAB
-        run: ./gradlew bundleRelease -Pandroid.injected.signing.store.file=$(pwd)/app/release.keystore -Pandroid.injected.signing.store.password=straitpassword -Pandroid.injected.signing.key.alias=strait-escape-key -Pandroid.injected.signing.key.password=straitpassword
+        env:
+          KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
+        run: |
+          ./gradlew bundleRelease \
+            -Pandroid.injected.signing.store.file="$GITHUB_WORKSPACE/android/app/release.keystore" \
+            -Pandroid.injected.signing.store.password="$KEYSTORE_PASSWORD" \
+            -Pandroid.injected.signing.key.alias=strait-escape-key \
+            -Pandroid.injected.signing.key.password="$KEYSTORE_PASSWORD"
         working-directory: android
 
       - name: Upload the Signed AAB Bundle
