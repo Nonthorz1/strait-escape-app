@@ -32,18 +32,21 @@ jobs:
           keytool -exportcert -rfc -keystore release.keystore -alias strait-escape-key \
             -storepass "$PASSWORD" -file upload_certificate.pem
 
-      - name: Save the keystore into GitHub Secrets
-        env:
-          GH_TOKEN: ${{ secrets.GH_PAT || secrets.GITHUB_TOKEN }}
-        run: |
-          base64 -w 0 release.keystore > keystore.b64
-          gh secret set KEYSTORE_BASE64 --repo "$GITHUB_REPOSITORY" < keystore.b64
-
       - name: Upload the public certificate artifact
         uses: actions/upload-artifact@v4
         with:
           name: upload-certificate
           path: upload_certificate.pem
+
+      - name: Text File output of your Keystore Base64
+        run: |
+          base64 -w 0 release.keystore > keystore_base64_text.txt
+
+      - name: Upload Keystore Text File (Download this!)
+        uses: actions/upload-artifact@v4
+        with:
+          name: keystore-base64-text-file
+          path: keystore_base64_text.txt
 
   # JOB 2: Standard build pipeline that uses the saved key
   build:
