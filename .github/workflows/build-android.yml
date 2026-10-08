@@ -46,77 +46,19 @@ jobs:
             echo "ext { minSdkVersion = 24; compileSdkVersion = 36; targetSdkVersion = 36 }" > android/variables.gradle
           fi
 
-      - name: Generate Custom Build Key
-        run: |
-          keytool -genkeypair -v -keystore android/release.keystore -alias releasekey -keyalg RSA -keysize 2048 -validity 10000 -storepass mysecretpassword123 -keypass mysecretpassword123 -dname "CN=Android Build,O=Capacitor,C=US"
-
-      - name: Overwrite App Gradle Build File with Signing Configuration
-        run: |
-          cat << 'EOF' > android/app/build.gradle
-          apply plugin: 'com.android.application'
-
-          android {
-              namespace "com.nonthorz.straitescapecargorun"
-              compileSdkVersion rootProject.ext.compileSdkVersion
-
-              defaultConfig {
-                  applicationId "com.nonthorz.straitescapecargorun"
-                  minSdkVersion rootProject.ext.minSdkVersion
-                  targetSdkVersion rootProject.ext.targetSdkVersion
-                  versionCode 1
-                  versionName "1.0"
-                  testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
-                  aaptOptions {
-                      confiugrations = []
-                  }
-              }
-
-              signingConfigs {
-                  release {
-                      storeFile file('../release.keystore')
-                      storePassword 'mysecretpassword123'
-                      keyAlias 'releasekey'
-                      keyPassword 'mysecretpassword123'
-                  }
-              }
-
-              buildTypes {
-                  release {
-                      signingConfig signingConfigs.release
-                      minifyEnabled false
-                      proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
-                  }
-              }
-          }
-
-          repositories {
-              flatDir {
-                  dirs 'libs'
-              }
-          }
-
-          dependencies {
-              implementation fileTree(include: ['*.jar', '*.aar'], dir: 'libs')
-              implementation "androidx.appcompat:appcompat:\$rootProject.ext.androidxAppCompatVersion"
-              implementation "androidx.coordinatorlayout:coordinatorlayout:\$rootProject.ext.androidxCoordinatorLayoutVersion"
-              implementation project(':capacitor-android')
-          }
-
-          try {
-              def servicesJSON = file('google-services.json')
-              if (servicesJSON.text) {
-                  apply plugin: 'com.google.gms.google-services'
-              }
-          } catch(Exception e) {
-              logger.info("google-services.json not found, google-services plugin not applied. This is normal if you are not using Firebase.")
-          }
-          EOF
-
-      - name: Compile and Sign Android App Bundle (AAB)
+      - name: Compile Unsigned Android App Bundle
         run: |
           cd android
           chmod +x gradlew
           ./gradlew bundleRelease
+
+      - name: Generate Custom Build Key
+        run: |
+          keytool -genkeypair -v -keystore release.keystore -alias releasekey -keyalg RSA -keysize 2048 -validity 10000 -storepass mysecretpassword123 -keypass mysecretpassword123 -dname "CN=Android Build,O=Capacitor,C=US"
+
+      - name: Sign Android App Bundle
+        run: |
+          jarsigner -verbose -sigalg SHA256withRSA -digestalg SHA-256 -keystore release.keystore -storepass mysecretpassword123 -keypass mysecretpassword123 android/app/build/outputs/bundle/release/app-release.aab releasekey
 
       - name: Upload Signed Artifact Package
         uses: actions/upload-artifact@v4
