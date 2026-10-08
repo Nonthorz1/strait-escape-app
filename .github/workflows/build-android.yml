@@ -40,18 +40,19 @@ jobs:
         run: |
           if [ -f "android/variables.gradle" ]; then
             sed -i 's/minSdkVersion = [0-9]*/minSdkVersion = 24/g' android/variables.gradle
-            echo "Successfully updated minSdkVersion to 24 without touching other variables."
-            cat android/variables.gradle
+            echo "Successfully updated minSdkVersion to 24."
           else
             echo "Error: android/variables.gradle not found!"
             exit 1
           fi
 
-      - name: Compile Unsigned Android App Bundle
+      - name: Strip Signing Hardcoding Restraints
         run: |
-          cd android
-          chmod +x gradlew
-          ./gradlew bundleRelease
+          if [ -f "android/app/build.gradle" ]; then
+            sed -i '/signingConfigs/,$d' android/app/build.gradle
+            echo "}" >> android/app/build.gradle
+            echo "Cleaned transient hardcoded signing properties."
+          fi
 
       - name: Generate Custom Build Key
         run: |
@@ -59,6 +60,10 @@ jobs:
 
       - name: Sign Android App Bundle
         run: |
+          cd android
+          chmod +x gradlew
+          ./gradlew bundleRelease
+          cd ..
           jarsigner -verbose -sigalg SHA256withRSA -digestalg SHA-256 -keystore release.keystore -storepass mysecretpassword123 -keypass mysecretpassword123 android/app/build/outputs/bundle/release/app-release.aab releasekey
 
       - name: Upload Signed Artifact Package
