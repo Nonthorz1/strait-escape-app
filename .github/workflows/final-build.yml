@@ -33,9 +33,18 @@ jobs:
       - name: Sync web content into the Android project
         run: npx cap sync android
 
-      - name: Raise minimum supported Android version to 24
+      - name: Raise target SDK versions to 36
         run: |
-          sed -i -E 's/minSdkVersion[[:space:]]*=[[:space:]]*[0-9]+/minSdkVersion = 24/' android/variables.gradle
+          if [ -f "android/variables.gradle" ]; then
+            sed -i -E 's/minSdkVersion[[:space:]]*=[[:space:]]*[0-9]+/minSdkVersion = 24/' android/variables.gradle
+            sed -i -E 's/compileSdkVersion[[:space:]]*=[[:space:]]*[0-9]+/compileSdkVersion = 36/' android/variables.gradle
+            sed -i -E 's/targetSdkVersion[[:space:]]*=[[:space:]]*[0-9]+/targetSdkVersion = 36/' android/variables.gradle
+            echo "Successfully forced Target and Compile SDK to 36."
+            cat android/variables.gradle
+          else
+            echo "Error: variables.gradle not found!"
+            exit 1
+          fi
 
       - name: Make gradlew executable
         run: chmod +x ./android/gradlew
