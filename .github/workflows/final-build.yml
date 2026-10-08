@@ -48,14 +48,14 @@ jobs:
         env:
           KEYSTORE_BASE64: ${{ secrets.KEYSTORE_BASE64 }}
         run: |
-          echo "$KEYSTORE_BASE64" | base64 -d > android/app/release.keystore
+          echo "$KEYSTORE_BASE64" | base64 -d > "$GITHUB_WORKSPACE/android/release.keystore"
 
       - name: Build and sign the release AAB
         env:
           KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
         run: |
           ./gradlew bundleRelease \
-            -Pandroid.injected.signing.store.file="release.keystore" \
+            -Pandroid.injected.signing.store.file="$GITHUB_WORKSPACE/android/release.keystore" \
             -Pandroid.injected.signing.store.password="$KEYSTORE_PASSWORD" \
             -Pandroid.injected.signing.key.alias=upload \
             -Pandroid.injected.signing.key.password="$KEYSTORE_PASSWORD"
