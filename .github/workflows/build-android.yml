@@ -42,19 +42,42 @@ jobs:
             sed -i 's/minSdkVersion = 22/minSdkVersion = 24/g' android/variables.gradle
             echo "Injected target minSdkVersion 24 successfully."
           else
-            echo "Warning: Native build settings missing, setting manually."
             mkdir -p android
             echo "ext { minSdkVersion = 24; compileSdkVersion = 36; targetSdkVersion = 36 }" > android/variables.gradle
           fi
 
-      - name: Compile and Bundle Android Binary
+      - name: Generate Custom Build Key
+        run: |
+          keytool -genkeypair -v -keystore android/release.keystore -alias releasekey -keyalg RSA -keysize 2048 -validity 10000 -storepass mysecretpassword123 -keypass mysecretpassword123 -dname "CN=Android Build,O=Capacitor,C=US"
+
+      - name: Configure Gradle Signing
+        run: |
+          echo "
+          android {
+              signingConfigs {
+                  release {
+                      storeFile file('release.keystore')
+                      storePassword 'mysecretpassword123'
+                      keyAlias 'releasekey'
+                      keyPassword 'mysecretpassword123'
+                  }
+              }
+              buildTypes {
+                  release {
+                      signingConfig signingConfigs.release
+                  }
+              }
+          }
+          " >> android/app/build.gradle
+
+      - name: Compile and Sign Android App Bundle (AAB)
         run: |
           cd android
           chmod +x gradlew
           ./gradlew bundleRelease
 
-      - name: Upload Finished Artifact Package
+      - name: Upload Signed Artifact Package
         uses: actions/upload-artifact@v4
         with:
-          name: strait-escape-v2-release-aab
+          name: strait-escape-v2-ready-aab
           path: android/app/build/outputs/bundle/release/app-release.aab
