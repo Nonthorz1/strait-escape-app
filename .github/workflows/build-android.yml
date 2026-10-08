@@ -2,60 +2,58 @@ name: Build Android AAB for Play Store (V2 Fresh Start)
 
 on:
   push:
-    branches: [ main ]
+    branches:
+      - main
   workflow_dispatch:
 
 jobs:
   build:
     runs-on: ubuntu-latest
+
     steps:
-      - name: Check out the code
+      - name: Checkout Source Code
         uses: actions/checkout@v4
 
       - name: Set up Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '22'
+          node-version: 20
+          cache: 'npm'
 
-      - name: Set up Java
-        uses: actions/setup-java@v4
-        with:
-          distribution: 'temurin'
-          java-version: '17'
-
-      - name: Install project dependencies
+      - name: Install Dependencies
         run: npm install
 
-      - name: Add the Android platform
-        run: npx cap add android || true
+      - name: Build Web Assets
+        run: npm run build --if-present
 
-      - name: Sync web content into the Android project
+      - name: Add Android Platform
+        run: npx cap add android --if-present
+
+      - name: Sync Capacitor Android
         run: npx cap sync android
 
-      - name: Make gradlew executable
-        run: chmod +x ./android/gradlew
-
-      - name: Generate Fresh V2 Keystore
-        env:
-          PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
+      - name: Force Overwrite Min SDK Version to 24
         run: |
-          keytool -genkeypair -v -keystore android/app/release.keystore \
-            -alias strait-escape-v2-key -keyalg RSA -keysize 2048 -validity 10000 \
-            -storepass "$PASSWORD" -keypass "$PASSWORD" \
-            -dname "CN=StraitEscapeV2,O=Developer,C=US"
+          if [ -f android/variables.gradle ]; then
+            sed -i 's/minSdkVersion = 22/minSdkVersion = 24/g' android/variables.gradle
+            echo "Successfully injected minSdkVersion = 24 flag."
+          else
+            echo "Error: android/variables.gradle not found!"
+            exit 1
+          fi
 
-      - name: Build and Sign the V2 Release AAB
-        env:
-          PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'zulu'
+          java-version: '17'
+
+      - name: Build Android App Bundle (AAB)
         run: |
-          ./gradlew bundleRelease \
-            -Pandroid.injected.signing.store.file=$(pwd)/app/release.keystore \
-            -Pandroid.injected.signing.store.password="$PASSWORD" \
-            -Pandroid.injected.signing.key.alias=strait-escape-v2-key \
-            -Pandroid.injected.signing.key.password="$PASSWORD"
-        working-directory: android
+          cd android
+          ./gradlew bundleRelease
 
-      - name: Upload the V2 Signed AAB Bundle
+      - name: Upload Build Artifact
         uses: actions/upload-artifact@v4
         with:
           name: strait-escape-v2-release-aab
