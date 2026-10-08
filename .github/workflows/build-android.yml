@@ -36,13 +36,14 @@ jobs:
           npx cap add android || true
           npx cap sync android
 
-      - name: Direct SDK Override Injection
+      - name: Safely Update Min SDK Target
         run: |
-          if [ -d "android" ]; then
-            echo "ext { minSdkVersion = 24; compileSdkVersion = 36; targetSdkVersion = 36 }" > android/variables.gradle
-            echo "Successfully updated variables.gradle parameters."
+          if [ -f "android/variables.gradle" ]; then
+            sed -i 's/minSdkVersion = [0-9]*/minSdkVersion = 24/g' android/variables.gradle
+            echo "Successfully updated minSdkVersion to 24 without touching other variables."
+            cat android/variables.gradle
           else
-            echo "Android folder generation error!"
+            echo "Error: android/variables.gradle not found!"
             exit 1
           fi
 
