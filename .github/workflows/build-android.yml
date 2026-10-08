@@ -46,9 +46,15 @@ jobs:
             exit 1
           fi
 
-      - name: Auto-Generate Deployment Workspace Keystore
+      - name: Link Repository Keystore to Deployment Directory
         run: |
-          keytool -genkeypair -v -keystore android/release.keystore -alias releasekey -keyalg RSA -keysize 2048 -validity 10000 -storepass capacitorpass123 -keypass capacitorpass123 -dname "CN=Android Build,O=Capacitor,C=US"
+          if [ -f "release.keystore" ]; then
+            cp release.keystore android/release.keystore
+            echo "Successfully mapped repository release certificate key."
+          else
+            echo "Error: release.keystore file missing from repository root! Please upload it first."
+            exit 1
+          fi
 
       - name: Inject Automated Signing Configurations Into Gradle
         run: |
