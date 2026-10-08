@@ -46,6 +46,32 @@ jobs:
             exit 1
           fi
 
+      - name: Auto-Generate Deployment Workspace Keystore
+        run: |
+          keytool -genkeypair -v -keystore android/release.keystore -alias releasekey -keyalg RSA -keysize 2048 -validity 10000 -storepass capacitorpass123 -keypass mysecretpassword123 -dname "CN=Android Build,O=Capacitor,C=US"
+
+      - name: Inject Automated Signing Configurations Into Gradle
+        run: |
+          cat << 'EOF' >> android/app/build.gradle
+
+          android {
+              signingConfigs {
+                  release {
+                      storeFile file('../release.keystore')
+                      storePassword 'capacitorpass123'
+                      keyAlias 'releasekey'
+                      keyPassword 'mysecretpassword123'
+                  }
+              }
+              buildTypes {
+                  release {
+                      signingConfig signingConfigs.release
+                  }
+              }
+          }
+          EOF
+          echo "Successfully injected native certificate attributes block."
+
       - name: Compile and Export Native Android Bundle
         run: |
           cd android
