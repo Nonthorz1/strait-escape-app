@@ -48,11 +48,12 @@ jobs:
 
       - name: Auto-Generate Deployment Workspace Keystore
         run: |
-          keytool -genkeypair -v -keystore android/release.keystore -alias releasekey -keyalg RSA -keysize 2048 -validity 10000 -storepass capacitorpass123 -keypass mysecretpassword123 -dname "CN=Android Build,O=Capacitor,C=US"
+          keytool -genkeypair -v -keystore android/release.keystore -alias releasekey -keyalg RSA -keysize 2048 -validity 10000 -storepass capacitorpass123 -keypass capacitorpass123 -dname "CN=Android Build,O=Capacitor,C=US"
 
       - name: Inject Automated Signing Configurations Into Gradle
         run: |
-          cat << 'EOF' >> android/app/build.gradle
+          if [ -f "android/app/build.gradle" ]; then
+            cat << 'EOF' >> android/app/build.gradle
 
           android {
               signingConfigs {
@@ -60,7 +61,7 @@ jobs:
                       storeFile file('../release.keystore')
                       storePassword 'capacitorpass123'
                       keyAlias 'releasekey'
-                      keyPassword 'mysecretpassword123'
+                      keyPassword 'capacitorpass123'
                   }
               }
               buildTypes {
@@ -70,7 +71,11 @@ jobs:
               }
           }
           EOF
-          echo "Successfully injected native certificate attributes block."
+            echo "Successfully injected uniform native certificate attributes."
+          else
+            echo "Error: build.gradle not found!"
+            exit 1
+          fi
 
       - name: Compile and Export Native Android Bundle
         run: |
