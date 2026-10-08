@@ -46,27 +46,13 @@ jobs:
             exit 1
           fi
 
-      - name: Strip Signing Hardcoding Restraints
-        run: |
-          if [ -f "android/app/build.gradle" ]; then
-            sed -i '/signingConfigs/,$d' android/app/build.gradle
-            echo "}" >> android/app/build.gradle
-            echo "Cleaned transient hardcoded signing properties."
-          fi
-
-      - name: Generate Custom Build Key
-        run: |
-          keytool -genkeypair -v -keystore release.keystore -alias releasekey -keyalg RSA -keysize 2048 -validity 10000 -storepass mysecretpassword123 -keypass mysecretpassword123 -dname "CN=Android Build,O=Capacitor,C=US"
-
-      - name: Sign Android App Bundle
+      - name: Compile and Export Native Android Bundle
         run: |
           cd android
           chmod +x gradlew
           ./gradlew bundleRelease
-          cd ..
-          jarsigner -verbose -sigalg SHA256withRSA -digestalg SHA-256 -keystore release.keystore -storepass mysecretpassword123 -keypass mysecretpassword123 android/app/build/outputs/bundle/release/app-release.aab releasekey
 
-      - name: Upload Signed Artifact Package
+      - name: Upload Clean Build Artifact
         uses: actions/upload-artifact@v4
         with:
           name: strait-escape-v2-ready-aab
