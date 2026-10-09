@@ -1,14 +1,26 @@
-# Privacy Policy for Strait Escape Cargo Run
+---
+---
 
-Last updated: October 8, 2026
+# Privacy Policy for Strait Escape: Cargo Run
 
-Nonthorz built the Strait Escape Cargo Run game as a Free app. This SERVICE is provided by Nonthorz at no cost and is intended for use as is.
+Last updated: October 9, 2026
 
-## Information Collection and Use
-We do not collect, store, or share any personal user data or device information. 
+Nonthorz built Strait Escape: Cargo Run as a free game. This policy explains how the game handles information.
+
+## Information We Collect
+We do not collect, store, transmit, or share any personal information or device information. The game has no accounts, no advertising, and no analytics or tracking tools.
+
+## Data Stored on Your Device
+The game saves your progress (completed levels, coins, unlocked ship skins, and settings) locally on your device only. This data is never sent to us or to any third party. Clearing the app's data or uninstalling the game removes it.
+
+## Third-Party Services
+The game does not use third-party services that collect user data.
+
+## Children's Privacy
+The game is intended for users aged 13 and over. We do not knowingly collect personal information from anyone.
 
 ## Changes to This Privacy Policy
-We may update our Privacy Policy from time to time. Thus, you are advised to review this page periodically for any changes.
+We may update this policy from time to time. Any changes will be posted on this page with a new "Last updated" date.
 
 ## Contact Us
-If you have any questions or suggestions about our Privacy Policy, do not hesitate to contact us through our GitHub profile.
+If you have any questions about this Privacy Policy, contact us at nonthorz@gmail.com.
