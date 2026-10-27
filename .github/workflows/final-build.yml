@@ -30,6 +30,9 @@ jobs:
       - name: Add the Android platform
         run: npx cap add android || true
 
+      - name: Generate Android icons
+        run: npx --yes @capacitor/assets generate --android
+
       - name: Sync web content into the Android project
         run: npx cap sync android
 
